@@ -7,7 +7,7 @@ export default {
   },
   methods: {
     handleChange(e: any) {
-      this.$emit("customChange", e.target.value);
+      this.$emit("text", e.target.value);
     },
   },
 };

@@ -13,12 +13,16 @@ export default {
   data() {
     return {
       pokemon: {} as IPokemon,
+      query: "",
     };
   },
   methods: {
+    getText(value: string) {
+      this.query = value;
+    },
     searchPokemon() {
       try {
-        getPokemonByName(1).then((data) => {
+        getPokemonByName(this.query.toLowerCase()).then((data) => {
           getEvolutionChain(data.id).then((res) => {
             if (res.chain.evolves_to.length > 0) {
               for (let i = 0; i < res.chain.evolves_to.length; i++) {
@@ -55,7 +59,7 @@ export default {
           evolutionChain.push(pokeEvolution);
           this.pokemon.evolutions = evolutionChain;
         }
-        return
+        return;
       }
       evolutionChain.push(pokeEvolution);
       this.pokemon.evolutions = evolutionChain;
@@ -67,7 +71,7 @@ export default {
 
 <template>
   <div style="display: flex; flex-direction: column; align-items: center">
-    <Search  />
+    <Search @text="getText" />
     <button @click="searchPokemon">Search</button>
   </div>
   <div v-if="pokemon.id">
