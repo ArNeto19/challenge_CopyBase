@@ -2,6 +2,9 @@
 import PokeCard from "../components/PokeData/PokeCard.vue";
 import Search from "../components/Search/Search.vue";
 
+import { getPokemonByName, getEvolutionChain } from "../services/apiService";
+import { IPokemon } from "../utils/pokemon-interface";
+
 export default {
   components: {
     PokeCard,
@@ -9,45 +12,54 @@ export default {
   },
   data() {
     return {
-      hasData: false,
-      pokemon: {
-        name: "Ditto",
-        imgUrl: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/132.png",
-        imgAlt: "ditto sprite",
-        evolutions: [
-          {
-            name: "Ditto",
-            imgUrl:
-              "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/132.png",
-            imgAlt: "ditto sprite",
-            evolutions: [
-              {
-                name: "Ditto",
-                imgUrl:
-                  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/132.png",
-                imgAlt: "ditto sprite",
-              },
-              {
-                name: "Ditto",
-                imgUrl:
-                  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/132.png",
-                imgAlt: "ditto sprite",
-              },
-            ],
-          },
-          {
-            name: "Ditto",
-            imgUrl:
-              "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/132.png",
-            imgAlt: "ditto sprite",
-          },
-        ],
-      },
+      pokemon: {} as IPokemon,
     };
   },
   methods: {
-    toggleData() {
-      this.hasData = !this.hasData;
+    searchPokemon() {
+      try {
+        getPokemonByName(1).then((data) => {
+          getEvolutionChain(data.id).then((res) => {
+            if (res.chain.evolves_to.length > 0) {
+              for (let i = 0; i < res.chain.evolves_to.length; i++) {
+                this.getPokemonFromEvolutionChain(res.chain.evolves_to[i]);
+              }
+            }
+          });
+
+          return (this.pokemon = {
+            id: data.id,
+            name: data.name,
+            sprites: data.sprites,
+            stats: data.stats,
+            types: data.types,
+          });
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async getPokemonFromEvolutionChain(evolution: any) {
+      let pokeEvolution = await getPokemonByName(evolution.species.name);
+      let evolutionChain = [];
+
+      if (evolution.evolves_to.length > 0) {
+        for (let i = 0; i < evolution.evolves_to.length; i++) {
+          let el = evolution.evolves_to[i];
+          let nextEvolutionChain = [];
+          let ev = await this.getPokemonFromEvolutionChain(el);
+
+          nextEvolutionChain.push(ev);
+          pokeEvolution.evolutions = nextEvolutionChain;
+
+          evolutionChain.push(pokeEvolution);
+          this.pokemon.evolutions = evolutionChain;
+        }
+        return
+      }
+      evolutionChain.push(pokeEvolution);
+      this.pokemon.evolutions = evolutionChain;
+      return pokeEvolution;
     },
   },
 };
@@ -55,15 +67,17 @@ export default {
 
 <template>
   <div style="display: flex; flex-direction: column; align-items: center">
-    <Search />
-    <button @click="toggleData">Toggle</button>
+    <Search  />
+    <button @click="searchPokemon">Search</button>
   </div>
-  <div v-if="hasData">
+  <div v-if="pokemon.id">
     <PokeCard
-      :name="pokemon.name"
-      :img-url="pokemon.imgUrl"
-      :img-alt="pokemon.imgAlt"
-      :evolutions="pokemon.evolutions" />
+      :id="pokemon?.id"
+      :name="pokemon?.name"
+      :sprites="pokemon?.sprites"
+      :types="pokemon?.types"
+      :stats="pokemon?.stats"
+      :evolutions="pokemon?.evolutions" />
   </div>
 </template>
 

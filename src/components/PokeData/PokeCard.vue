@@ -1,25 +1,30 @@
 <script setup lang="ts">
-import { IPokemon } from "../../services/pokemon-interface";
+import { IPokemon } from "../../utils/pokemon-interface";
 
 const pokemon = withDefaults(defineProps<IPokemon>(), {});
 </script>
 
 <template>
-  <div style="width: 100%">
+  <div style="width: 100%">    
     <div class="card">
-      <img :src="pokemon.imgUrl" :alt="pokemon.imgAlt" />
-      <p>{{ pokemon.name }}</p>
+      <router-link :to="`/pokemon/${pokemon.name}`">
+      <img :src="pokemon?.sprites?.front_default" alt="poke-sprite" />
+      <p>#{{ pokemon?.id }}</p>
+      <p>{{ pokemon?.name }}</p>
+    </router-link>
     </div>
-    <div v-if="pokemon.evolutions?.length ?? 0 > 0">
+    <div v-if="pokemon?.evolutions?.length ?? 0 > 0">
       <span class="arrow">&#8595;</span>
     </div>
-    <div v-if="pokemon.evolutions?.length ?? 0 > 0" class="evolution-list">
+    <div v-if="pokemon?.evolutions?.length ?? 0 > 0" class="evolution-list">
       <PokeCard
         v-for="(evolution, index) in pokemon.evolutions"
-        :name="evolution.name"
-        :img-url="evolution.imgUrl"
-        :img-alt="evolution.imgAlt"
-        :evolutions="evolution.evolutions" />
+        :id="evolution?.id"
+        :name="evolution?.name"
+        :sprites="evolution?.sprites"
+        :types="evolution?.types"
+        :stats="evolution?.stats"
+        :evolutions="evolution?.evolutions" />
     </div>
   </div>
 </template>
